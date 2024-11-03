@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mobile Compass</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .compass {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            border: 2px solid #000;
+            border-radius: 50%;
+            background-color: #fff;
+        }
+        .needle {
+            position: absolute;
+            width: 4px;
+            height: 100px;
+            background-color: red;
+            top: 0;
+            left: 50%;
+            transform-origin: bottom center;
+        }
+    </style>
+</head>
+<body>
+    <div class="compass">
+        <div class="needle" id="needle"></div>
+    </div>
+
+    <script>
+        const targetLatitude = 49.4827; // Replace with your target latitude
+        const targetLongitude = 8.47747; // Replace with your target longitude
+
+        function calculateBearing(startLat, startLng, destLat, destLng) {
+            const startLatRad = toRadians(startLat);
+            const startLngRad = toRadians(startLng);
+            const destLatRad = toRadians(destLat);
+            const destLngRad = toRadians(destLng);
+
+            const y = Math.sin(destLngRad - startLngRad) * Math.cos(destLatRad);
+            const x = Math.cos(startLatRad) * Math.sin(destLatRad) - 
+                      Math.sin(startLatRad) * Math.cos(destLatRad) * Math.cos(destLngRad - startLngRad);
+
+            let bearing = Math.atan2(y, x);
+            bearing = toDegrees(bearing);
+            return (bearing + 360) % 360; // Normalize to 0-360 degrees
+        }
+
+        function toRadians(degrees) {
+            return degrees * Math.PI / 180;
+        }
+
+        function toDegrees(radians) {
+            return radians * 180 / Math.PI;
+        }
+
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(function(position) {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+
+                const bearing = calculateBearing(userLat, userLng, targetLatitude, targetLongitude);
+
+                if (window.DeviceOrientationEvent) {
+                    window.addEventListener('deviceorientation', function(event) {
+                        let alpha = event.alpha; // Compass heading
+                        if (typeof alpha === 'number') {
+                            const heading = (bearing - alpha + 360) % 360;
+                            document.getElementById('needle').style.transform = 'rotate(' + heading + 'deg)';
+                        }
+                    }, true);
+                } else {
+                    alert("Device Orientation not supported");
+                }
+            }, function(error) {
+                console.error("Error getting location: ", error);
+                alert("Error getting location");
+            });
+        } else {
+            alert("Geolocation not supported");
+        }
+    </script>
+</body>
+</html>
