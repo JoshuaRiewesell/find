@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="de">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Mobile Compass</title>
+    <title>Find</title>
     <style>
         body {
             display: flex;
@@ -11,21 +11,26 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-image: url('background.png');
+            background-size: cover;
+            background-position: center;
         }
         .compass {
             position: relative;
-            width: 200px;
-            height: 200px;
+            width: 300px;
+            height: 300px;
             border: 2px solid #000;
             border-radius: 50%;
-            background-color: #fff;
+            background-color: transparent;
+            background-image: url('compass-background.png');
+            background-size: cover;
+            background-position: center;
         }
         .needle {
             position: absolute;
-            width: 4px;
-            height: 100px;
-            background-color: red;
+            width: 10px;
+            height: 150px;
+            background-color: #FFD700;
             top: 0;
             left: 50%;
             transform-origin: bottom center;
@@ -38,11 +43,54 @@
     </div>
 
     <script>
+        const targetLatitude = 37.7749; // Replace with your target latitude
+        const targetLongitude = -122.4194; // Replace with your target longitude
+
+        function calculateBearing(startLat, startLng, destLat, destLng) {
+            const startLatRad = toRadians(startLat);
+            const startLngRad = toRadians(startLng);
+            const destLatRad = toRadians(destLat);
+            const destLngRad = toRadians(destLng);
+
+            const y = Math.sin(destLngRad - startLngRad) * Math.cos(destLatRad);
+            const x = Math.cos(startLatRad) * Math.sin(destLatRad) - 
+                      Math.sin(startLatRad) * Math.cos(destLatRad) * Math.cos(destLngRad - startLngRad);
+
+            let bearing = Math.atan2(y, x);
+            bearing = toDegrees(bearing);
+            return (bearing + 360) % 360; // Normalize to 0-360 degrees
+        }
+
+        function toRadians(degrees) {
+            return degrees * Math.PI / 180;
+        }
+
+        function toDegrees(radians) {
+            return radians * 180 / Math.PI;
+        }
+
+        let currentBearing = 0;
+
+        if (navigator.geolocation) {
+            navigator.geolocation.watchPosition(function(position) {
+                const userLat = position.coords.latitude;
+                const userLng = position.coords.longitude;
+
+                currentBearing = calculateBearing(userLat, userLng, targetLatitude, targetLongitude);
+            }, function(error) {
+                console.error("Error getting location: ", error);
+                alert("Error getting location");
+            });
+        } else {
+            alert("Geolocation not supported");
+        }
+
         if (window.DeviceOrientationEvent) {
             window.addEventListener('deviceorientation', function(event) {
                 let alpha = event.alpha; // Compass heading
                 if (typeof alpha === 'number') {
-                    document.getElementById('needle').style.transform = 'rotate(' + alpha + 'deg)';
+                    const heading = (360 - currentBearing - alpha) % 360;
+                    document.getElementById('needle').style.transform = 'rotate(' + heading + 'deg)';
                 }
             }, true);
         } else {
