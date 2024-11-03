@@ -1,109 +1,53 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="arrow.svg" type="image/x-icon">
-    
-    <title>Find</title>
+    <title>Mobile Compass</title>
     <style>
         body {
             display: flex;
-            flex-direction: column;
-            align-items: center;
             justify-content: center;
+            align-items: center;
             height: 100vh;
             margin: 0;
+            background-color: #f0f0f0;
         }
-        #arrow {
-            width: 100px;
+        .compass {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            border: 2px solid #000;
+            border-radius: 50%;
+            background-color: #fff;
+        }
+        .needle {
+            position: absolute;
+            width: 4px;
             height: 100px;
-            background-image: url('arrow.png');
-            background-size: cover;
-            transition: transform 0.3s;
-        }
-        #distance {
-            margin-top: 20px;
-            font-size: 24px;
+            background-color: red;
+            top: 0;
+            left: 50%;
+            transform-origin: bottom center;
         }
     </style>
 </head>
 <body>
-    <div id="arrow"></div>
-    <div id="distance">Distanz wird berechnet...</div>
+    <div class="compass">
+        <div class="needle" id="needle"></div>
+    </div>
 
     <script>
-        function getUrlParams() {
-            const params = new URLSearchParams(window.location.search);
-            return {
-                lat: parseFloat(params.get("lat")),
-                lon: parseFloat(params.get("lon")),
-            };
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', function(event) {
+                let alpha = event.alpha; // Compass heading
+                if (typeof alpha === 'number') {
+                    document.getElementById('needle').style.transform = 'rotate(' + alpha + 'deg)';
+                }
+            }, true);
+        } else {
+            alert("Device Orientation not supported");
         }
-
-        // Function to calculate distance between two coordinates (Haversine formula)
-        function calculateDistance(lat1, lon1, lat2, lon2) {
-            const R = 6371e3; // Earth's radius in meters
-            const toRadians = (angle) => angle * (Math.PI / 180);
-            const dLat = toRadians(lat2 - lat1);
-            const dLon = toRadians(lon2 - lon1);
-            const a =
-                Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-                Math.cos(toRadians(lat1)) *
-                Math.cos(toRadians(lat2)) *
-                Math.sin(dLon / 2) *
-                Math.sin(dLon / 2);
-            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-            return R * c;
-        }
-
-        // Function to calculate bearing between two coordinates
-        function calculateBearing(lat1, lon1, lat2, lon2) {
-            const toRadians = (angle) => angle * (Math.PI / 180);
-            const toDegrees = (angle) => angle * (180 / Math.PI);
-            const dLon = toRadians(lon2 - lon1);
-            const y = Math.sin(dLon) * Math.cos(toRadians(lat2));
-            const x =
-                Math.cos(toRadians(lat1)) * Math.sin(toRadians(lat2)) -
-                Math.sin(toRadians(lat1)) *
-                Math.cos(toRadians(lat2)) *
-                Math.cos(dLon);
-            return (toDegrees(Math.atan2(y, x)) + 360) % 360;
-        }
-
-        let targetBearing = 0;
-
-        function updateArrowAndDistance() {
-            const target = getUrlParams();
-            if (!target.lat || !target.lon) {
-                document.getElementById('distance').textContent = 'Invalid coordinates.';
-                return;
-            }
-
-            navigator.geolocation.watchPosition(position => {
-                const currentLat = position.coords.latitude;
-                const currentLon = position.coords.longitude;
-                const distance = calculateDistance(currentLat, currentLon, target.lat, target.lon);
-                targetBearing = calculateBearing(currentLat, currentLon, target.lat, target.lon);
-
-                document.getElementById('distance').textContent = `${distance.toFixed(0)} Meter`;
-            }, error => {
-                document.getElementById('distance').textContent = 'Error getting location.';
-            }, {
-                enableHighAccuracy: true
-            });
-        }
-
-        function handleOrientation(event) {
-            const alpha = event.alpha; // Rotation around z-axis
-            const arrow = document.getElementById("arrow");
-            const adjustedBearing = targetBearing - alpha;
-            arrow.style.transform = `rotate(${adjustedBearing}deg)`;
-        }
-
-        window.addEventListener("deviceorientation", handleOrientation);
-
-        updateArrowAndDistance();
     </script>
 </body>
 </html>
