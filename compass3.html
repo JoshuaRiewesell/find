@@ -84,7 +84,7 @@
             window.addEventListener('deviceorientation', function(event) {
                 let alpha = event.alpha; // Compass heading
                 if (typeof alpha === 'number') {
-                    const heading = (currentBearing - alpha + 360) % 360;
+                    const heading = (360 - currentBearing - alpha) % 360;
                     document.getElementById('needle').style.transform = 'rotate(' + heading + 'deg)';
                 }
             }, true);
